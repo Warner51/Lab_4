@@ -3,6 +3,8 @@ package com.example.lab_4;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -19,10 +21,12 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity4 extends AppCompatActivity {
     private MyListAdapter adapter;
     private ArrayList<String> todo = new ArrayList<>(Arrays.asList());
+    private MyDatabase myDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +40,11 @@ public class MainActivity4 extends AppCompatActivity {
 
         myList.setAdapter(adapter = new MyListAdapter());
 
+        myDatabase = new MyDatabase(this);
+        List<String> taskNames = myDatabase.getTasks();
+        todo.addAll(taskNames);
+        adapter.notifyDataSetChanged();
+
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -43,6 +52,7 @@ public class MainActivity4 extends AppCompatActivity {
 
                 if (!newItem.isEmpty()) {
                     todo.add(newItem);
+                    myDatabase.insertTask(newItem);
                     adapter.notifyDataSetChanged();
                     editText.setText("");
                 }
@@ -60,6 +70,7 @@ public class MainActivity4 extends AppCompatActivity {
 
                 build.setPositiveButton("Yes", (click, arg) -> {
                     todo.remove(position);
+                    deleteTask(position);
                     adapter.notifyDataSetChanged();
                 });
 
@@ -71,6 +82,17 @@ public class MainActivity4 extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    private void deleteTask(int position) {
+        if (position >= 0 && position < todo.size()) {
+            String taskNameToDelete = todo.get(position);
+
+            todo.remove(position);
+            adapter.notifyDataSetChanged();
+
+            myDatabase.deleteTask(taskNameToDelete);
+        }
     }
 
     private class MyListAdapter extends BaseAdapter {
@@ -93,6 +115,18 @@ public class MainActivity4 extends AppCompatActivity {
 
             return newView;
 
+        }
+    }
+
+    public class ToDo {
+        private String taskName;
+
+        public String getTaskName() {
+            return taskName;
+        }
+
+        public void setTaskName(String taskName) {
+            this.taskName = taskName;
         }
     }
 }
